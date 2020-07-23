@@ -20,6 +20,7 @@ $data = json_decode(file_get_contents("php://input"));
     http_response_code(200);
     //echo json_encode(array("message" => $resultado));
     echo json_encode($resultado);
+    //echo $data;
 } catch (Exception $exc) {
     echo $exc->getMessage();
 }

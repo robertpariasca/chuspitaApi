@@ -73,13 +73,13 @@ class Cargo extends Conexion {
                     from 
                         se_cargo 
                     where
-                        idempresa=:p_idempresa and idoficina=:idoficina 
+                        idempresa=:p_idempresa and idoficina=:p_idoficina 
                     order by 
                         descripcion
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->bindParam(":p_idempresa",  $this->getIdempresa());
-            $sentencia->bindParam(":idoficina",  $this->getIdOficina());
+            $sentencia->bindParam(":p_idoficina",  $this->getIdOficina());
             $sentencia->execute();
             $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
             return $resultado;

@@ -94,6 +94,7 @@ class Oficina extends Conexion {
             $sentencia->execute();
             $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
             return $resultado;
+            //return $this->getIdempresa();
         } catch (Exception $exc) {
             throw $exc;
         }
