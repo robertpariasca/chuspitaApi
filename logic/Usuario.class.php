@@ -3,83 +3,49 @@
 require_once '../data/Conexion.class.php';
 
 class Usuario extends Conexion {
-    private $CodigoUsuario;
-    private $Dni;
-    private $P_foto;
-    private $Nombres;
-    private $Apellidos;
-    private $Direccion;
-    private $Email;
-    private $Telefono;
-    private $Sexo;
-    private $Edad;
-    private $Cargo;
-    private $Constrasenia;
-    private $Tipo;
-    private $Estado;
+    
     //private $Cuenta;
     //usuario_acceso
+
+    private $codusuario;
+    private $alias;
+    private $clave;
+    private $fecharegistro;
+    private $nombre;
+    private $apellidos;
+    private $estado;
+
     private $Idempresa;
     private $Idoficina;
     private $Idcargo;
 
 
-    public function getCodigoUsuario() {
-        return $this->CodigoUsuario;
+    public function getCodusuario() {
+        return $this->codusuario;
     }
 
-    public function getDni() {
-        return $this->Dni;
+    public function getAlias(){
+        return $this->alias;
     }
 
-    public function getP_foto() {
-        return $this->P_foto;
+    public function getClave(){
+        return $this->clave;
     }
 
-    public function getNombres() {
-        return $this->Nombres;
+    public function getFecharegistro(){
+        return $this->fecharegistro;
+    }
+
+    public function getNombre() {
+        return $this->nombre;
     }
 
     public function getApellidos() {
-        return $this->Apellidos;
+        return $this->apellidos;
     }
 
-    public function getDireccion() {
-        return $this->Direccion;
-    }
-
-    public function getEmail(){
-        return $this->Email;
-    }
-
-    public function getTelefono(){
-        return $this->Telefono;
-    }
-
-    public function getSexo(){
-        return $this->Sexo;
-    }
-    
-    public function getEdad(){
-        return $this->Edad;
-    }
-
-    public function getCargo()
-    {
-        return $this->Cargo; // es el código del cargo
-    }
-
-    public function getConstrasenia(){
-        return $this->Constrasenia;
-    }
-
-    public function getTipo()
-    {
-        return $this->Tipo;
-    }
-
-    public function getEstado(){
-        return $this->Estado;
+     public function getEstado(){
+        return $this->estado;
     }
 
     public function getIdempresa(){
@@ -94,60 +60,32 @@ class Usuario extends Conexion {
         return $this->Idcargo;
     }
 
-    public function setCodigoUsuario($CodigoUsuario) {
-        $this->CodigoUsuario = $CodigoUsuario;
+    public function setCodusuario($codusuario) {
+        $this->codusuario = $codusuario;
     }
 
-    public function setDni($Dni) {
-        $this->Dni = $Dni;
+    public function setAlias($alias){
+        $this->alias = $alias;
     }
 
-    public function setP_foto($P_foto) {
-        $this->P_foto = $P_foto;
+    public function setClave($clave){
+        $this->clave = $clave;
     }
 
-    public function setNombres($Nombres) {
-        $this->Nombres = $Nombres;
+    public function setFecharegistro($fecharegistro){
+        $this->fecharegistro = $fecharegistro;
     }
 
-    public function setApellidos($Apellidos) {
-        $this->Apellidos = $Apellidos;
+    public function setNombre($nombre) {
+        $this->nombre = $nombre;
     }
 
-    public function setDireccion($Direccion) {
-        $this->Direccion = $Direccion;
+    public function setApellidos($apellidos) {
+        $this->apellidos = $apellidos;
     }
 
-    public function SetEmail($Email){
-        $this->Email = $Email;
-    }
-
-    public function setTelefono($Telefono) {
-        $this->Telefono = $Telefono;
-    }
-
-    public function setSexo($Sexo) {
-        $this->Sexo = $Sexo;
-    }
-
-    public function setEdad($Edad) {
-        $this->Edad = $Edad;
-    }
-
-    public function SetCargo($Cargo){
-        $this->Cargo = $Cargo;
-    }
-
-    public function SetConstrasenia($Constrasenia){
-        $this->Constrasenia = $Constrasenia;
-    }
-
-    public function SetTipo($Tipo){
-        $this->Tipo = $Tipo;
-    }
-
-    public function SetEstado($Estado){
-        $this->Estado = $Estado;
+    public function SetEstado($estado){
+        $this->estado = $estado;
     }
 
     public function setIdempresa($Idempresa){
@@ -167,17 +105,25 @@ class Usuario extends Conexion {
         try {
             $sql = "
                     select 
-                        codigo_usuario,
-                        clave,
-                        tipo,
+                        u.codusuario,
+                        alias,
+                        fecharegistro,
+                        nombre,
+                        apellidos,
                         estado,
-                        fecha_registro,
-                        doc_id
-                        
+                        c.descripcion
                     from 
-                        credenciales_acceso   
+                        se_usuario u
+                    inner join
+                        se_usuario_acceso a
+                    on
+                        u.codusuario=a.codusuario
+                    inner join
+                        se_cargo c
+                    on
+                        a.idempresa = c.idempresa and a.idoficina = c.idoficina and a.idcargo=c.idcargo
                     order by 
-                            2
+                        u.codusuario
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->execute();
@@ -188,70 +134,87 @@ class Usuario extends Conexion {
         }
     }
 
-    public function agregar() {
+    public function agregar($ip,$codlog) {
         $this->dblink->beginTransaction();
         
         try {
-            $sql = "select * from f_generar_correlativo('se_usuario') as nc";
-            $sentencia = $this->dblink->prepare($sql);
-            $sentencia->execute();
-            
-            if ($sentencia->rowCount()){
-                $resultado = $sentencia->fetch(PDO::FETCH_ASSOC);
-                $nuevoCodigo = $resultado["nc"];
-                $this->setCodigoUsuario($nuevoCodigo);
-                
-                /*Insertar en la tabla candidato*/
-//                $sql = "
-//                    insert into laboratorio(codigo_laboratorio,nombre,codigo_pais) 
-//                    values(:p_cod_lab, :p_nomb, :p_codigo_pais)
-//                    ";
-                
-                $sql = "select * from fn_registrarUsuario(                    
-                                        :p_cod_usuario,
-                                        :p_doc_id, 
-                                        :p_nombres,
-                                        :p_apellidos, 
-                                        :p_direccion, 
-                                        :p_telefono, 
-                                        :p_sexo, 
-                                        :p_edad, 
-                                        :p_email, 
-                                        :p_cargo_id, 
-                                        :p_clave,
-                                        :p_tipo,
-                                        :p_estado
-                                     );";
-                $sentencia = $this->dblink->prepare($sql);
-                // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
-                $sentencia->bindParam(":p_cod_usuario", $this->getCodigoUsuario());
-                $sentencia->bindParam(":p_doc_id", $this->getDni());
-                $sentencia->bindParam(":p_nombres", $this->getNombres());
-                $sentencia->bindParam(":p_apellidos", $this->getApellidos());
-                $sentencia->bindParam(":p_direccion", $this->getDireccion());
-                $sentencia->bindParam(":p_telefono", $this->getTelefono());
-                $sentencia->bindParam(":p_sexo", $this->getSexo());
-                $sentencia->bindParam(":p_edad", $this->getEdad());
-                $sentencia->bindParam(":p_email", $this->getEmail());
-                $sentencia->bindParam(":p_cargo_id", $this->getCargo());
-                $sentencia->bindParam(":p_clave", $this->getConstrasenia());
-                $sentencia->bindParam(":p_tipo", $this->getTipo());
-                $sentencia->bindParam(":p_estado", $this->getEstado());
-                $sentencia->execute();
-                /*Insertar en la tabla laboratorio*/
-                
-                /*Actualizar el correlativo*/
-                $sql = "update correlativo set numero = numero + 1 
-                        where tabla='credenciales_acceso'";
-                $sentencia = $this->dblink->prepare($sql);
-                $sentencia->execute();
-                /*Actualizar el correlativo*/
-                $this->dblink->commit();
-                return true;
-                
+            //condiciones
+            $sqlcon = "
+                    select 
+                            alias
+                    from
+                            se_usuario
+                    where
+                            alias = :p_alias;
+                ";
+//fin dondiciones
+            $sentenciacon = $this->dblink->prepare($sqlcon);
+            $sentenciacon->bindParam(":p_alias", $this->getAlias());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+            $sentenciacon->execute();
+
+            if ($sentenciacon->rowCount()) {
+
+              $this->dblink->commit();
+                    return "DU";
             }else{
-                throw new Exception("No se ha configurado el correlativo para la tabla credenciales_acceso");
+                $sql = "select * from f_generar_correlativo('se_usuario') as nc";
+                $sentencia = $this->dblink->prepare($sql);
+                $sentencia->execute();
+                
+                if ($sentencia->rowCount()){
+                    $resultado = $sentencia->fetch(PDO::FETCH_ASSOC);
+                    $nuevoCodigo = $resultado["nc"];
+                    $this->setCodusuario($nuevoCodigo);
+                    
+                    /*Insertar en la tabla candidato*/
+    //                $sql = "
+    //                    insert into laboratorio(codigo_laboratorio,nombre,codigo_pais) 
+    //                    values(:p_cod_lab, :p_nomb, :p_codigo_pais)
+    //                    ";
+                    
+                    $sql = "select * from fn_registrarUsuario(                    
+                                            :p_codusuario,
+                                            :p_alias, 
+                                            :p_clave,
+                                            :p_nombre, 
+                                            :p_apellidos, 
+                                            :p_idempresa, 
+                                            :p_idoficina, 
+                                            :p_idcargo, 
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_codusuario", $this->getCodusuario());
+                    $sentencia->bindParam(":p_alias", $this->getAlias());
+                    $sentencia->bindParam(":p_clave", $this->getClave());
+                    $sentencia->bindParam(":p_nombre", $this->getNombre());
+                    $sentencia->bindParam(":p_apellidos", $this->getApellidos());
+                    $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+                    $sentencia->bindParam(":p_idoficina", $this->getIdoficina());
+                    $sentencia->bindParam(":p_idcargo", $this->getIdcargo());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+                    /*Insertar en la tabla laboratorio*/
+                    
+                    /*Actualizar el correlativo*/
+                    $sql = "update correlativo set numero = numero + 1 
+                            where tabla='se_usuario'";
+                    $sentencia = $this->dblink->prepare($sql);
+                    $sentencia->execute();
+                    /*Actualizar el correlativo*/
+                    $this->dblink->commit();
+                    return "EXITO";
+                    
+                }else{
+                    throw new Exception("No se ha configurado el correlativo para la tabla usuario");
+                }
+       
             }
+
             
         } catch (Exception $exc) {
             $this->dblink->rollBack();
@@ -260,7 +223,7 @@ class Usuario extends Conexion {
         
         return false;
     }
-   
+   /*
     public function leerDatos($p_dni) {
         try {
             $sql = "
@@ -372,4 +335,5 @@ class Usuario extends Conexion {
         }
         return false;
     }
+    */
 }
