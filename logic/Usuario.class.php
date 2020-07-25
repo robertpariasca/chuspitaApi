@@ -158,7 +158,7 @@ class Usuario extends Conexion {
               $this->dblink->commit();
                     return "DU";
             }else{
-                $sql = "select * from f_generar_correlativo('se_usuario') as nc";
+                $sql = "select * from f_generar_correlativo_3digitos('se_usuario') as nc";
                 $sentencia = $this->dblink->prepare($sql);
                 $sentencia->execute();
                 
