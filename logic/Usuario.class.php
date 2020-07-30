@@ -15,10 +15,6 @@ class Usuario extends Conexion {
     private $apellidos;
     private $estado;
 
-    private $Idempresa;
-    private $Idoficina;
-    private $Idcargo;
-
 
     public function getCodusuario() {
         return $this->codusuario;
@@ -48,18 +44,6 @@ class Usuario extends Conexion {
         return $this->estado;
     }
 
-    public function getIdempresa(){
-        return $this->Idempresa;
-    }
-
-    public function getIdoficina(){
-        return $this->Idoficina;
-    }
-
-    public function getIdcargo(){
-        return $this->Idcargo;
-    }
-
     public function setCodusuario($codusuario) {
         $this->codusuario = $codusuario;
     }
@@ -86,18 +70,6 @@ class Usuario extends Conexion {
 
     public function SetEstado($estado){
         $this->estado = $estado;
-    }
-
-    public function setIdempresa($Idempresa){
-        $this->Idempresa = $Idempresa;
-    }
-
-    public function setIdoficina($Idoficina){
-        $this->Idoficina = $Idoficina;
-    }
-
-    public function setIdcargo($Idcargo){
-        $this->Idcargo = $Idcargo;
     }
 
     public function listar() {
@@ -179,9 +151,6 @@ class Usuario extends Conexion {
                                             :p_clave,
                                             :p_nombre, 
                                             :p_apellidos, 
-                                            :p_idempresa, 
-                                            :p_idoficina, 
-                                            :p_idcargo, 
                                             :p_codigolog, 
                                             :p_ip
                                          );";
@@ -192,9 +161,6 @@ class Usuario extends Conexion {
                     $sentencia->bindParam(":p_clave", $this->getClave());
                     $sentencia->bindParam(":p_nombre", $this->getNombre());
                     $sentencia->bindParam(":p_apellidos", $this->getApellidos());
-                    $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
-                    $sentencia->bindParam(":p_idoficina", $this->getIdoficina());
-                    $sentencia->bindParam(":p_idcargo", $this->getIdcargo());
                     $sentencia->bindParam(":p_codigolog", $codlog);
                     $sentencia->bindParam(":p_ip", $ip);
                     $sentencia->execute();
