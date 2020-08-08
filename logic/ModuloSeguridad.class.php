@@ -43,7 +43,7 @@ class Modulo extends Conexion {
                     from 
                         se_modulo
                     order by 
-                        desmodulo
+                        idmodulo
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->execute();
@@ -149,5 +149,82 @@ class Modulo extends Conexion {
         }
         
         return false;
-    }  
+    }
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminarmodulo(
+                :p_idmodulo,
+                :p_codigolog, 
+                :p_ip
+            )
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_idmodulo",  $this->getIdmodulo());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+            //return $this->getIdempresa();
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+    public function actualizar($ip,$codlog) {
+        $this->dblink->beginTransaction();
+        
+        try {
+            //condiciones
+            $sqlcon = "
+                    select 
+                            desmodulo
+                    from
+                            se_modulo
+                    where
+                            desmodulo = :p_desmodulo
+                    and
+                            idmodulo <> :p_idmodulo;
+                ";
+//fin dondiciones
+            $sentenciacon = $this->dblink->prepare($sqlcon);
+            $sentenciacon->bindParam(":p_desmodulo", $this->getDesmodulo());
+            $sentenciacon->bindParam(":p_idmodulo", $this->getIdmodulo());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+            $sentenciacon->execute();
+
+            if ($sentenciacon->rowCount()) {
+
+              $this->dblink->commit();
+                    return "DU";
+            }else{
+                    
+                    $sql = "select * from fn_editarmodulo(                    
+                                            :p_idmodulo,
+                                            :p_desmodulo, 
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_idmodulo", $this->getIdmodulo());
+                    $sentencia->bindParam(":p_desmodulo", $this->getDesmodulo());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+
+                    $this->dblink->commit();
+                    return "EXITO";
+
+       
+            }
+
+            
+        } catch (Exception $exc) {
+            $this->dblink->rollBack();
+            throw $exc;
+        }
+        
+        return false;
+    }
 }

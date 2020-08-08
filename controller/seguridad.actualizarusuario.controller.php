@@ -15,17 +15,19 @@ $data = json_decode(file_get_contents("php://input"));
     $objSesion = new Usuario();
     $objSesionAcceso = new UsuarioAcceso();
     //$objSesion->setEmail($email);
-    //$objSesion->setClave($clave);
+    $objSesion->setCodusuario($data->codusuario);
     $objSesion->setAlias($data->alias);
     $objSesion->setClave($data->contraseña);
     $objSesion->setNombre($data->nombre);
     $objSesion->setApellidos($data->apellidos);
     
-    $resultado = $objSesion->agregar($data->ip,$data->codlog);
-
+    $resultado = $objSesion->actualizar($data->ip,$data->codlog);
+   
     if ($resultado=="EXITO"){
+        $objSesionAcceso->setCodusuario($objSesion->getCodusuario());
+        $objSesionAcceso->eliminar($data->ip,$data->codlog);
         foreach ($data->cargocadena as $valor) {
-            $objSesionAcceso->setCodusuario($objSesion->getCodusuario());
+           
             $objSesionAcceso->setIdempresa($valor->codempresa);
             $objSesionAcceso->setIdoficina($valor->codoficina);
             $objSesionAcceso->setIdcargo($valor->codcargo);

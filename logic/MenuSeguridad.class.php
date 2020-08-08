@@ -37,11 +37,16 @@ class Menu extends Conexion {
         try {
             $sql = "
                     select 
-                        idmodulo,
+                        m.idmodulo,
+                        o.desmodulo,
                         codmenu,
                         desmenu
                     from 
-                        se_menu
+                        se_menu m
+                    inner join
+                        se_modulo o
+                    on
+                        m.idmodulo=o.idmodulo
                     order by 
                         desmenu
                 ";
@@ -159,5 +164,96 @@ class Menu extends Conexion {
         }
         
         return false;
-    }  
+    }
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminarmenu(
+                :p_idmodulo,
+                :p_codmenu,
+                :p_codigolog, 
+                :p_ip
+            )
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_idmodulo",  $this->getIdmodulo());
+            $sentencia->bindParam(":p_codmenu",  $this->getCodmenu());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+            //return $this->getIdempresa();
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+    public function actualizar($ip,$codlog) {
+        $this->dblink->beginTransaction();
+        
+        try {
+            //condiciones
+            $sqlcon = "
+                    select 
+                            desmenu
+                    from
+                            se_menu
+                    where
+                            idmodulo=:p_idmodulo
+                    and
+                            desmenu = :p_desmenu
+                    and 
+                            codmenu<>:p_codmenu;
+                ";
+//fin dondiciones
+            $sentenciacon = $this->dblink->prepare($sqlcon);
+            $sentenciacon->bindParam(":p_idmodulo", $this->getIdmodulo());
+            $sentenciacon->bindParam(":p_codmenu", $this->getCodmenu());
+            $sentenciacon->bindParam(":p_desmenu", $this->getDesmenu());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+            $sentenciacon->execute();
+
+            if ($sentenciacon->rowCount()) {
+
+              $this->dblink->commit();
+                    return "DU";
+            }else{
+
+                    $sql = "select * from fn_editarmenu(                    
+                                            :p_idmodulo,
+                                            :p_codmenu,
+                                            :p_desmenu, 
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_idmodulo", $this->getIdmodulo());
+                    $sentencia->bindParam(":p_codmenu", $this->getCodmenu());
+                    $sentencia->bindParam(":p_desmenu", $this->getDesmenu());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+                    /*Insertar en la tabla laboratorio*/
+                    
+                    /*
+                    $sql = "update correlativo set numero = numero + 1 
+                            where tabla='se_modulo'";
+                    $sentencia = $this->dblink->prepare($sql);
+                    $sentencia->execute();
+                    */
+                    $this->dblink->commit();
+                    return "EXITO";
+
+       
+            }
+
+            
+        } catch (Exception $exc) {
+            $this->dblink->rollBack();
+            throw $exc;
+        }
+        
+        return false;
+    }
 }

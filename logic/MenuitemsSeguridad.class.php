@@ -8,7 +8,7 @@ class Menuitems extends Conexion {
     private $codmenu;
     private $codmenuitem;
     private $desmenuitem;
-    private $tipoactividad;
+    private $link;
 
     public function getIdmodulo(){
         return $this->idmodulo;
@@ -26,8 +26,8 @@ class Menuitems extends Conexion {
         return $this->desmenuitem;
     }
 
-    public function getTipoactividad(){
-        return $this->tipoactividad;
+    public function getLink(){
+        return $this->link;
     }
 
     public function setIdmodulo($idmodulo){
@@ -46,24 +46,36 @@ class Menuitems extends Conexion {
         $this->desmenuitem = $desmenuitem;
     }
 
-    public function setTipoactividad($tipoactividad){
-        $this->tipoactividad = $tipoactividad;
+    public function setLink($link){
+        $this->link = $link;
     }
 
     public function listar() {
        
         try {
             $sql = "
-                    select 
-                        idmodulo,
-                        codmenu,
-                        codmenuitem,
-                        desmenuitem,
-                        tipoactividad
-                    from 
-                        se_menuitems
-                    order by 
-                        desmenuitem
+                   	  select 
+							i.idmodulo,
+							o.desmodulo,
+							i.codmenu,
+							m.desmenu,
+							codmenuitem,
+                            desmenuitem,
+                            link
+						from 
+							se_menuitems i
+						inner join
+							se_modulo o
+						on
+							i.idmodulo=o.idmodulo
+						inner join
+							se_menu m
+						on
+							i.codmenu=m.codmenu and i.idmodulo=m.idmodulo
+						group by
+							i.idmodulo, o.desmodulo,i.codmenu, m.desmenu,codmenuitem,desmenuitem
+						order by 
+							o.desmodulo, m.desmenu, codmenuitem
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->execute();
@@ -82,8 +94,7 @@ class Menuitems extends Conexion {
                         idmodulo,
                         codmenu,
                         codmenuitem,
-                        desmenuitem,
-                        tipoactividad
+                        desmenuitem
                     from 
                         se_menuitems
                     where
@@ -156,7 +167,7 @@ class Menuitems extends Conexion {
                                             :p_codmenu,
                                             :p_codmenuitem,
                                             :p_desmenuitem,
-                                            :p_tipoactividad,
+                                            :p_link,
                                             :p_codigolog, 
                                             :p_ip
                                          );";
@@ -166,7 +177,7 @@ class Menuitems extends Conexion {
                     $sentencia->bindParam(":p_codmenu", $this->getCodmenu());
                     $sentencia->bindParam(":p_codmenuitem", $this->getCodmenuitem());
                     $sentencia->bindParam(":p_desmenuitem", $this->getDesmenuitem());
-                    $sentencia->bindParam(":p_tipoactividad", $this->getTipoactividad());
+                    $sentencia->bindParam(":p_link", $this->getLink());
                     $sentencia->bindParam(":p_codigolog", $codlog);
                     $sentencia->bindParam(":p_ip", $ip);
                     $sentencia->execute();
@@ -185,6 +196,107 @@ class Menuitems extends Conexion {
                     throw new Exception("No se ha configurado el correlativo para la tabla Menu");
                 }
        
+            }
+
+            
+        } catch (Exception $exc) {
+            $this->dblink->rollBack();
+            throw $exc;
+        }
+        
+        return false;
+    }
+
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminarmenuitems(
+                :p_idmodulo,
+                :p_codmenu,
+                :p_codmenuitem,
+                :p_codigolog, 
+                :p_ip
+            )
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_idmodulo",  $this->getIdmodulo());
+            $sentencia->bindParam(":p_codmenu",  $this->getCodmenu());
+            $sentencia->bindParam(":p_codmenuitem",  $this->getCodmenuitem());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+            //return $this->getIdempresa();
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    } 
+
+    public function actualizar($ip,$codlog) {
+        $this->dblink->beginTransaction();
+        
+        try {
+            //condiciones
+            $sqlcon = "
+                    select 
+                            desmenuitem
+                    from
+                            se_menuitems
+                    where
+                            idmodulo=:p_idmodulo
+                    and
+                            codmenu=:p_codmenu
+                    and
+                            desmenuitem = :p_desmenuitem
+                    and
+                            codmenuitem <> :p_codmenuitem;
+                ";
+//fin dondiciones
+            $sentenciacon = $this->dblink->prepare($sqlcon);
+            $sentenciacon->bindParam(":p_idmodulo", $this->getIdmodulo());
+            $sentenciacon->bindParam(":p_codmenu", $this->getCodmenu());
+            $sentenciacon->bindParam(":p_codmenuitem", $this->getCodmenuitem());
+            $sentenciacon->bindParam(":p_desmenuitem", $this->getDesmenuitem());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+            $sentenciacon->execute();
+
+            if ($sentenciacon->rowCount()) {
+
+              $this->dblink->commit();
+                    return "DU";
+            }else{
+
+                    $sql = "select * from fn_editarmenuitems(                    
+                                            :p_idmodulo,
+                                            :p_codmenu,
+                                            :p_codmenuitem,
+                                            :p_desmenuitem,
+                                            :p_link,
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_idmodulo", $this->getIdmodulo());
+                    $sentencia->bindParam(":p_codmenu", $this->getCodmenu());
+                    $sentencia->bindParam(":p_codmenuitem", $this->getCodmenuitem());
+                    $sentencia->bindParam(":p_desmenuitem", $this->getDesmenuitem());
+                    $sentencia->bindParam(":p_link", $this->getLink());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+                    /*Insertar en la tabla laboratorio*/
+                    
+                    /*
+                    $sql = "update correlativo set numero = numero + 1 
+                            where tabla='se_modulo'";
+                    $sentencia = $this->dblink->prepare($sql);
+                    $sentencia->execute();
+                    */
+                    $this->dblink->commit();
+                    return "EXITO";
+
             }
 
             

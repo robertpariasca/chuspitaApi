@@ -105,7 +105,7 @@ class Empresa extends Conexion {
                     from 
                         se_empresa   
                     order by 
-                        desempresa
+                        idempresa
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->execute();
@@ -216,6 +216,92 @@ class Empresa extends Conexion {
        
             }
 
+            
+        } catch (Exception $exc) {
+            $this->dblink->rollBack();
+            throw $exc;
+        }
+        
+        return false;
+    }
+
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminarempresa(
+                :p_idempresa, 
+                :p_codigolog, 
+                :p_ip
+            );";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+    public function actualizar($ip,$codlog) {
+        $this->dblink->beginTransaction();
+        
+        try {
+            $sqlcon = "
+            select 
+                    desempresa
+            from
+                    se_empresa
+            where
+                    desempresa = :p_desempresa
+            and
+                    idempresa <> :p_idempresa;
+        ";
+//fin dondiciones
+    $sentenciacon = $this->dblink->prepare($sqlcon);
+    $sentenciacon->bindParam(":p_desempresa", $this->getDesempresa());
+    $sentenciacon->bindParam(":p_idempresa", $this->getDesempresa());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+    $sentenciacon->execute();
+
+    if ($sentenciacon->rowCount()) {
+
+      $this->dblink->commit();
+            return "DU";
+    }else{
+                    $sql = "select * from fn_editarempresa(                    
+                                            :p_idempresa,
+                                            :p_desempresa, 
+                                            :p_direccion,
+                                            :p_representantelegal, 
+                                            :p_idtipodocidentidad, 
+                                            :p_docidentidad, 
+                                            :p_telefono, 
+                                            :p_logo, 
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+                    $sentencia->bindParam(":p_desempresa", $this->getDesempresa());
+                    $sentencia->bindParam(":p_direccion", $this->getDireccion());
+                    $sentencia->bindParam(":p_representantelegal", $this->getRepresentantelegal());
+                    $sentencia->bindParam(":p_idtipodocidentidad", $this->getIdtipodocidentidad());
+                    $sentencia->bindParam(":p_docidentidad", $this->getDocidentidad());
+                    $sentencia->bindParam(":p_telefono", $this->getTelefono());
+                    $sentencia->bindParam(":p_logo", $this->getLogo());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+
+                    $this->dblink->commit();
+                    return "EXITO";
+
+       
+            
+                }
             
         } catch (Exception $exc) {
             $this->dblink->rollBack();

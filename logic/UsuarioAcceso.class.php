@@ -45,15 +45,118 @@ class UsuarioAcceso extends Conexion {
         $this->Idcargo = $Idcargo;
     }
 
+    public function listarEmpresa() {
+       
+        try {
+            $sql = "
+                    select 
+                        u.codusuario,
+                        a.idempresa,
+						e.desempresa
+                    from 
+                        se_usuario u
+                    inner join
+                        se_usuario_acceso a
+                    on
+                        u.codusuario=a.codusuario
+					inner join
+						se_empresa e
+					on
+						a.idempresa = e.idempresa
+                    where
+						u.codusuario=:p_codusuario;
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_codusuario", $this->getCodusuario());
+            $sentencia->execute();
+            $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
+            return $resultado;
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+
+    public function listarOficina() {
+       
+        try {
+            $sql = "
+                     select 
+                        a.idoficina,
+						o.desoficina
+                    from 
+                        se_usuario u
+                    inner join
+                        se_usuario_acceso a
+                    on
+                        u.codusuario=a.codusuario
+					inner join
+						se_oficina o
+					on
+                        a.idempresa = o.idempresa and a.idoficina = o.idoficina
+                    where
+                        u.codusuario=:p_codusuario
+                    and
+                        a.idempresa=:p_idempresa;
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_codusuario", $this->getCodusuario());
+            $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+            $sentencia->execute();
+            $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
+            return $resultado;
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+
+    public function listarCargo() {
+       
+        try {
+            $sql = "
+                     select 
+                        a.idcargo,
+						o.descripcion
+                    from 
+                        se_usuario u
+                    inner join
+                        se_usuario_acceso a
+                    on
+                        u.codusuario=a.codusuario
+					inner join
+						se_cargo o
+					on
+						a.idempresa = o.idempresa and a.idoficina = o.idoficina and a.idcargo = o.idcargo
+                    where
+                        u.codusuario=:p_codusuario
+                    and
+                        a.idempresa=:p_idempresa
+                    and
+                        a.idoficina=:p_idoficina;
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_codusuario", $this->getCodusuario());
+            $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+            $sentencia->bindParam(":p_idoficina", $this->getIdoficina());
+            $sentencia->execute();
+            $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
+            return $resultado;
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+
     public function listar() {
        
         try {
             $sql = "
                     select 
                         u.codusuario,
-                        u.idempresa,
-                        u.idoficina,
-                        u.idcargo
+                        a.idempresa,
+						e.desempresa,
+                        a.idoficina,
+						o.desoficina,
+                        a.idcargo,
+						c.descripcion
                     from 
                         se_usuario u
                     inner join
@@ -64,10 +167,19 @@ class UsuarioAcceso extends Conexion {
                         se_cargo c
                     on
                         a.idempresa = c.idempresa and a.idoficina = c.idoficina and a.idcargo=c.idcargo
-                    order by 
-                        u.codusuario
+					inner join
+						se_oficina o
+					on
+						a.idempresa = o.idempresa and a.idoficina = o.idoficina
+					inner join
+						se_empresa e
+					on
+						a.idempresa = e.idempresa
+                    where
+						u.codusuario=:p_codusuario;
                 ";
             $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_codusuario", $this->getCodusuario());
             $sentencia->execute();
             $resultado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
             return $resultado;
@@ -121,5 +233,25 @@ class UsuarioAcceso extends Conexion {
         
         return false;
     }
- 
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminarusuarioacceso(
+                :p_codusuario,
+                :p_codigolog, 
+                :p_ip
+            )
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_codusuario",  $this->getCodusuario());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+            //return $this->getIdempresa();
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    } 
 }

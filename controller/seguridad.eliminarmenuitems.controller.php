@@ -12,14 +12,11 @@ $data = json_decode(file_get_contents("php://input"));
 
 
     $objSesion = new Menuitems();
-    //$objSesion->setEmail($email);
-    //$objSesion->setClave($clave);
     $objSesion->setIdmodulo($data->idmodulo);
     $objSesion->setCodmenu($data->codmenu);
-    $objSesion->setDesmenuitem($data->desmenuitem);
-    $objSesion->setLink($data->link);
-    //$resultado = $objSesion->listar();
-    $resultado = $objSesion->agregar($data->ip,$data->codlog);
+    $objSesion->setCodmenuitem($data->codmenuitem);
+
+    $resultado = $objSesion->eliminar($data->ip,$data->codlog);
     http_response_code(200);
     //echo json_encode($data->alias);
     echo json_encode($resultado);

@@ -56,16 +56,20 @@ class Oficina extends Conexion {
         try {
             $sql = "
                     select 
-                        idempresa,
+                        o.idempresa,
+                        e.desempresa,
                         idoficina,
                         desoficina,
-                        direccion,
-                        estado
-                        
+                        o.direccion,
+                        o.estado
                     from 
-                        se_oficina   
+                        se_oficina o
+                    inner join
+                        se_empresa e
+                    on
+                        o.idempresa=e.idempresa
                     order by 
-                        desoficina
+                        e.desempresa, idoficina
                 ";
             $sentencia = $this->dblink->prepare($sql);
             $sentencia->execute();
@@ -188,6 +192,84 @@ class Oficina extends Conexion {
         
         return false;
     }
+    public function eliminar($ip,$codlog) {
+       
+        try {
+            $sql = "
+            SELECT * from fn_eliminaroficina(
+                :p_idempresa, 
+                :p_idoficina, 
+                :p_codigolog, 
+                :p_ip
+            )
+                ";
+            $sentencia = $this->dblink->prepare($sql);
+            $sentencia->bindParam(":p_idempresa",  $this->getIdempresa());
+            $sentencia->bindParam(":p_idoficina",  $this->getIdoficina());
+            $sentencia->bindParam(":p_codigolog", $codlog);
+            $sentencia->bindParam(":p_ip", $ip);
+            $sentencia->execute();
+            return "EXITO";
+            //return $this->getIdempresa();
+        } catch (Exception $exc) {
+            throw $exc;
+        }
+    }
+    public function actualizar($ip,$codlog) {
+        $this->dblink->beginTransaction();
+        
+        try {
+            $sqlcon = "
+            select 
+                    desoficina
+            from
+                    se_oficina
+            where
+                    desoficina = :p_desoficina
+            and 
+                    idempresa = :p_idempresa
+            and
+                    idoficina <> :p_idoficina;
+        ";
+//fin dondiciones
+    $sentenciacon = $this->dblink->prepare($sqlcon);
+    $sentenciacon->bindParam(":p_desoficina", $this->getDesoficina());
+    $sentenciacon->bindParam(":p_idempresa", $this->getIdempresa());
+    $sentenciacon->bindParam(":p_idoficina", $this->getIdoficina());
+//            $sentencia->bindParam(":p_tipo", $this->getTipo());
+    $sentenciacon->execute();
 
+    if ($sentenciacon->rowCount()) {
 
+      $this->dblink->commit();
+            return "DU";
+    }else{  
+                    $sql = "select * from fn_editaroficina(                    
+                                            :p_idempresa,
+                                            :p_idoficina, 
+                                            :p_desoficina,
+                                            :p_direccion,
+                                            :p_codigolog, 
+                                            :p_ip
+                                         );";
+                    $sentencia = $this->dblink->prepare($sql);
+                    // $sentencia->bindParam(":p_codigoCandidato", $this->getCodigoCandidato());
+                    $sentencia->bindParam(":p_idempresa", $this->getIdempresa());
+                    $sentencia->bindParam(":p_idoficina", $this->getIdoficina());
+                    $sentencia->bindParam(":p_desoficina", $this->getDesoficina());
+                    $sentencia->bindParam(":p_direccion", $this->getDireccion());
+                    $sentencia->bindParam(":p_codigolog", $codlog);
+                    $sentencia->bindParam(":p_ip", $ip);
+                    $sentencia->execute();
+
+                    $this->dblink->commit();
+                    return "EXITO";
+        }
+        } catch (Exception $exc) {
+            $this->dblink->rollBack();
+            throw $exc;
+        }
+        
+        return false;
+    }
 }
